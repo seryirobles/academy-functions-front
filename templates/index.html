@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cliente Azure Function</title>
+  <style>
+    :root{
+      --bg: #0f172a;           /* fondo (oscuro por defecto) */
+      --panel: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --primary: #6366f1;
+      --primary-600:#5457e6;
+      --success:#22c55e;
+      --error:#ef4444;
+      color-scheme: dark;
+    }
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f8fafc;
+        --panel:#ffffff;
+        --text:#0f172a;
+        --muted:#475569;
+        color-scheme: light;
+      }
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font:16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #6366f122, transparent 60%),
+        radial-gradient(1000px 400px at 110% 10%, #06b6d422, transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg));
+      display:grid;
+      place-items:center;
+      padding:24px;
+    }
+    .card{
+      width:min(720px, 100%);
+      background:var(--panel);
+      border:1px solid #ffffff16;
+      border-radius:20px;
+      box-shadow:0 10px 30px #00000033;
+      overflow:hidden;
+    }
+    .header{
+      padding:22px 22px 6px;
+    }
+    .title{
+      margin:0;
+      font-weight:800;
+      letter-spacing:.3px;
+      font-size:clamp(22px, 4.2vw, 28px);
+    }
+    .subtitle{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:.95rem;
+    }
+    .body{ padding:18px 22px 8px; }
+    .row{ display:flex; gap:10px; align-items:center; }
+
+    label{ font-size:.95rem; color:var(--muted); display:block; margin:0 0 6px 2px; }
+    input[type="text"]{
+      flex:1;
+      padding:12px 14px;
+      border-radius:12px;
+      border:1px solid #ffffff1a;
+      background:#0b1220;
+      color:var(--text);
+      outline:none;
+      transition:border .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    @media (prefers-color-scheme: light){
+      input[type="text"]{ background:#fff; }
+    }
+    input[type="text"]:focus{
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px #6366f133;
+    }
+
+    button{
+      padding:12px 16px;
+      border:0;
+      border-radius:12px;
+      font-weight:600;
+      cursor:pointer;
+      background:var(--primary);
+      color:white;
+      display:inline-flex; align-items:center; gap:10px;
+      transition:transform .04s ease, background .15s ease, box-shadow .15s ease;
+      box-shadow:0 6px 18px #6366f144;
+    }
+    button:hover{ background:var(--primary-600); }
+    button:active{ transform:translateY(1px); }
+    button[disabled]{ opacity:.65; cursor:not-allowed; }
+
+    .spinner{
+      width:16px; height:16px; border-radius:50%;
+      border:3px solid #ffffff55; border-top-color:white;
+      animation:spin .7s linear infinite;
+    }
+    @keyframes spin{ to { transform: rotate(360deg); } }
+
+    .section{ margin-top:16px; }
+    .muted{ color:var(--muted); font-size:.9rem; }
+
+    .panel{
+      border:1px solid #ffffff1a;
+      background:#0b1220;
+      border-radius:14px;
+      padding:12px 14px;
+      overflow:auto;
+      max-height:220px;
+      white-space:pre-wrap;
+    }
+    @media (prefers-color-scheme: light){
+      .panel{ background:#fafafa; }
+    }
+
+    .alert{
+      border-radius:12px;
+      padding:10px 12px;
+      border:1px solid #ffffff1a;
+      font-weight:500;
+    }
+    .alert.success{ border-color:#22c55e55; background:#22c55e22; color:#16a34a; }
+    .alert.error{ border-color:#ef444455; background:#ef444422; color:#dc2626; }
+    .footer{
+      padding:12px 22px 18px;
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      color:var(--muted);
+      border-top:1px dashed #ffffff1a;
+      font-size:.9rem;
+    }
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      border:1px solid #ffffff3a; border-bottom-width:3px;
+      padding:1px 6px; border-radius:8px; font-size:.8rem; color:var(--text);
+      background:#0b1220;
+    }
+    @media (prefers-color-scheme: light){
+      .kbd{ background:#fff; }
+    }
+  </style>
+</head>
+<body>
+  <main class="card" role="main" aria-labelledby="title">
+    <div class="header">
+      <h1 id="title" class="title">Cliente Azure Function</h1>
+    </div>
+
+    <div class="body">
+      <label for="name">Nombre</label>
+      <div class="row">
+        <input id="name" type="text" placeholder="Ej.: Sergio" autocomplete="name" />
+        <button id="btn" type="button">
+          <span class="btn-text">Submit</span>
+          <span class="spinner" style="display:none"></span>
+        </button>
+      </div>
+
+      <div id="alert" class="section" style="display:none"></div>
+
+      <div class="section">
+        <div class="muted">Respuesta</div>
+        <pre id="result" class="panel" aria-live="polite"></pre>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span>Servidor Flask · proxy → Azure Function</span>
+      <span class="muted">Sugerencia: pulsa <span class="kbd">Enter</span> para enviar</span>
+    </div>
+  </main>
+
+  <script>
+    const $ = s => document.querySelector(s);
+    const nameInput = $("#name");
+    const btn = $("#btn");
+    const btnText = btn.querySelector(".btn-text");
+    const spinner = btn.querySelector(".spinner");
+    const resultEl = $("#result");
+    const alertBox = $("#alert");
+
+    function setBusy(b){
+      btn.disabled = b;
+      spinner.style.display = b ? "inline-block" : "none";
+      btnText.textContent = b ? "Enviando…" : "Submit";
+    }
+    function showAlert(type, text){
+      alertBox.className = "alert " + type;
+      alertBox.textContent = text;
+      alertBox.style.display = "block";
+    }
+    function clearAlert(){ alertBox.style.display = "none"; }
+
+    async function submit(){
+      const name = nameInput.value.trim();
+      clearAlert();
+      resultEl.textContent = "";
+      if(!name){
+        showAlert("error", "Introduce un nombre antes de enviar.");
+        nameInput.focus();
+        return;
+      }
+      setBusy(true);
+      try{
+        const r = await fetch("/api/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name })
+        });
+        const data = await r.json();
+        if(data.ok){
+          resultEl.textContent = data.result;
+          showAlert("success", "Llamada completada correctamente.");
+        }else{
+          showAlert("error", data.error || "Error desconocido.");
+        }
+      }catch(e){
+        showAlert("error", "Fallo de red o servidor: " + e);
+      }finally{
+        setBusy(false);
+      }
+    }
+
+    btn.addEventListener("click", submit);
+    nameInput.addEventListener("keydown", e=>{
+      if(e.key === "Enter"){ e.preventDefault(); submit(); }
+    });
+    // Focus inicial
+    nameInput.focus();
+  </script>
+</body>
+</html>
